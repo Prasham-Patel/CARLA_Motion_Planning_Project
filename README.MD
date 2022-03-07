@@ -1,10 +1,9 @@
-	# RBE 550 Motion Planning
-	# CARLA Simulation
+# RBE 550 Motion Planning: CARLA Simulation
 
-## Requirements
+### Requirements
 
-- requires python **3.70** to run
+- requires **python 3.70** to run
 
-## test.py
+### test.py
 
-- test.py: test to creat CARLA world  
+- test to create CARLA world  
