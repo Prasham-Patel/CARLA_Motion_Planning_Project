@@ -41,7 +41,7 @@ def main_test():
         # nx.draw(graph)
         plt.figure(figsize=(10, 9))
         nx.draw_spectral(graph, with_labels=True, node_size = 0.5)
-        plt.savefig("filename.png")
+        plt.savefig("Town_map.png")
         print(road_id_to_edge)
 
 
