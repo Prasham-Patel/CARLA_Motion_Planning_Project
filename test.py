@@ -16,7 +16,6 @@ except IndexError:
     pass
 
 import carla
-import cv2
 import random
 import time
 import numpy as np
@@ -40,9 +39,13 @@ def main_test():
         graph, id_map, road_id_to_edge = nx_builder._build_graph()
         # nx.draw(graph)
         plt.figure(figsize=(10, 9))
-        nx.draw_spectral(graph, with_labels=True, node_size = 0.5)
+        
+        origin = carla.Location(x = 396.0, y = 319.0, z = 0.0)
+        destination = carla.Location(x = 92, y = 11, z = 0.0)
+        route = nx_builder._path_search(origin, destination)
+        nx.draw_spectral(graph, font_size = 24,nodelist = route, with_labels=True, node_size = 0.1)
         plt.savefig("Town_map.png")
-        print(road_id_to_edge)
+        print(route)
 
 
         # The world contains the list blueprints that we can use for adding new
@@ -56,7 +59,7 @@ def main_test():
         # Now we need to give an initial transform to the vehicle. We choose a
         # random transform from the list of recommended spawn points of the map.
         transform = random.choice(world.get_map().get_spawn_points())
-        print(transform)
+        #print(transform)
         time.sleep(3)
 
         vehicle = world.spawn_actor(bp, transform)
@@ -66,7 +69,7 @@ def main_test():
            control.throttle = 0.5
            # control
            vehicle.apply_control(control)
-           print(vehicle.get_location())
+           #print(vehicle.get_location())
            # print(vehicle.get_acceleration())
            i += 1
 
