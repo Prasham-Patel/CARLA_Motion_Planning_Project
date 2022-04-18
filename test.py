@@ -29,7 +29,7 @@ def main_test():
         client.set_timeout(10.0)     # increase time-out buffer if system is slow in responding
 
         world = client.get_world()      # CARLA World entity
-        world = client.load_world('Town01')
+        world = client.load_world('Town03')
         map = world.get_map()
         # print(map.get_topology()[0][0])
         # print(map.get_topology()[0][1])
@@ -41,7 +41,7 @@ def main_test():
         # nx.draw(graph)
         plt.figure(figsize=(10, 9))
         nx.draw_spectral(graph, with_labels=True, node_size = 0.5)
-        plt.savefig("Town_map.png")
+        plt.savefig("filename.png")
         print(road_id_to_edge)
 
 
@@ -51,7 +51,7 @@ def main_test():
 
         # getting actor
         print("1")
-        bp = random.choice(blueprint_library.filter('vehicle'))
+        bp = blueprint_library.filter('model3')[0]
 
         # Now we need to give an initial transform to the vehicle. We choose a
         # random transform from the list of recommended spawn points of the map.
