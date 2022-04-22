@@ -1,14 +1,15 @@
 import numpy as np
 from math import atan, sin, cos, pi
 from matplotlib import pyplot as plt
+import copy
 
 class motion_primitive():
 
-    def __init__(self, Ti, Tf, theta_i, theta_f, xi, xi_dot, xf, yi, yi_dot, yf):
-        self.Ti = Ti
-        self.Tf = Tf
-        self.Vr = (((xf-xi)**2 + (yf-yi)**2)**0.5)/(Tf - Ti)
-        self.l = 2  # car length
+    def __init__(self, theta_i, theta_f, xi, xf, yi, yf):
+        self.Ti = 0
+        self.Tf = 1
+        self.Vr = 1
+        self.l = 2  # car length must be set manually
 
         #   Theta
         self.theta_i = theta_i
@@ -16,17 +17,15 @@ class motion_primitive():
 
         #   X Co_Ord
         self.xi = xi
-        self.xi_dot = xi_dot
+        self.xi_dot = self.Vr*cos(theta_i)
         self.xf = xf
-        self.xf_dot = self.Vr*sin(theta_f)
+        self.xf_dot = self.Vr*cos(theta_f)
 
         #   Y Co_Ord
         self.yi = yi
-        self.yi_dot = yi_dot
+        self.yi_dot = self.Vr*sin(theta_i)
         self.yf = yf
-        self.yf_dot = self.Vr*cos(theta_f)
-
-        print(self.xf_dot, self.yf_dot)
+        self.yf_dot = self.Vr*sin(theta_f)
 
     def cubic_T_Matrix(self):
         self.T_matrix = np.matrix([[1, self.Ti, self.Ti ** 2, self.Ti ** 3],
@@ -62,26 +61,26 @@ class motion_primitive():
 
         return x, x_dot, y, y_dot, theta, theta_dot
 
-    def get_steering_angle(self, theta_dot):
-        return atan((theta_dot*self.l)/self.Vr)
+    def get_steering_angle(self, theta_dot, Vr):
+        return atan((theta_dot*self.l)/Vr)
+
+    def get_path(self, step):
+        i = 0
+        pos_x = []
+        pos_y = []
+        while i < self.Tf - self.Ti:
+            val = np.squeeze(np.asarray(self.get_state(i)))
+            pos_x.append(val[0])
+            pos_y.append(val[2])
+            i += step
+
+        return pos_x, pos_y
 
 if __name__ == '__main__':
 
-    primitive = motion_primitive(0, 5, 0, pi/2, 0, 0, 0, 0, 0, 5)
+    primitive = motion_primitive(0, pi/2, 1, 2, 0, 5)
     primitive.cubic_T_Matrix()
     primitive.trajectory()
-    print(np.squeeze(np.asarray(primitive.get_state(5))))
-    step = 0.05
-    i = 0
-    pos_x = []
-    pos_y = []
-    while i < 5:
-        val = np.squeeze(np.asarray(primitive.get_state(i)))
-        pos_x.append(val[0])
-        pos_y.append(val[2])
-        # print(primitive.get_steering_angle(val[5]))
-        print((val[1]**2+ val[3]**2)**0.5)
-        i += step
-
+    pos_x, pos_y = primitive.get_path(0.001)
     plt.scatter(pos_x, pos_y)
     plt.show()
