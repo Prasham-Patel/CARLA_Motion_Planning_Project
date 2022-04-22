@@ -25,9 +25,9 @@ try:
 except IndexError:
     pass
 
-from WindowsNoEditor.PythonAPI.Create.motion_primitve import motion_primitive
-from WindowsNoEditor.PythonAPI.Create.basic_PID import VehiclePIDController
-from WindowsNoEditor.PythonAPI.Create.RRT import RRT
+from motion_primitve import motion_primitive
+from basic_PID import VehiclePIDController
+from RRT import RRT
 
 # DO NOT TOUCH !!!
 # Render object to keep and pass the PyGame surface
@@ -70,22 +70,7 @@ class world():
 
 
 if __name__ == '__main__':
-    # Connect to the client and retrieve the world object
-    # client = carla.Client('localhost', 2000)
-    # client.set_timeout(120.0)  # increase time-out buffer if system is slow in responding
-    # # world = client.get_world()
-    # world = client.load_world('Town01')
-    # map = world.get_map()
-    # print("World Ready")
-
-    # KEEP COMMENTED FOR NOW
-
-    # Set up the simulator in synchronous mode
-    # settings = world.get_settings()
-    # settings.synchronous_mode = True  # Enables synchronous mode
-    # settings.fixed_delta_seconds = 0.05
-    # world.apply_settings(settings)
-
+   
     CARLA_world = world('Town01')
     # Retrieve the map's spawn points
     spawn_points = CARLA_world.map.get_spawn_points()
@@ -180,42 +165,34 @@ if __name__ == '__main__':
         primitive.cubic_T_Matrix()
         primitive.trajectory()
 
-        pos_x, pos_y = primitive.get_path(0.1)
+        pos_x, pos_y = primitive.get_path(0.05)
         path_x += pos_x
         path_y += pos_y
         thetai = thetaf
 
     print(path_x)
     print(path_y)
-    control_waypoints = []
-    for i in range(len(path_x)):
-        control_waypoints.append(
-            CARLA_world.map.get_waypoint(carla.Location(x=path_x[i], y=path_y[i]), project_to_road=False))
-
-    plt.scatter(path_x, path_y)
-    plt.show()
-    print(len(control_waypoints))
 
     # Game loop
-    # # Game loop
-    controller = VehiclePIDController(CARLA_world.ego_vehicle, [1, 1, 0], [1, 1, 0])
-    for i in range(len(control_waypoints) - 1):
+    controller = VehiclePIDController(CARLA_world.ego_vehicle, [5, 5, 0], [1, 1, 0])
+    actual_x = []
+    actual_y = []
+    ti = time.time()
+    for i in range(len(path_x) - 1):
         trans = CARLA_world.ego_vehicle.get_transform()
         loc_x, loc_y = trans.location.x, trans.location.y
 
-        w_x, w_y = control_waypoints[i].transform.location.x, control_waypoints[i].transform.location.y
-        w_x2, w_y2 = control_waypoints[i + 1].transform.location.x, control_waypoints[i + 1].transform.location.y
-        phi = math.atan2((w_y - w_y2), (w_x - w_x2))
+        w_x, w_y = path_x[i], path_y[i]
+        w_x2, w_y2 = path_x[i+1], path_y[i+1]
+        phi = math.atan2((w_y2 - w_y), (w_x2 - w_x))
         physics = CARLA_world.ego_vehicle.get_physics_control()
         wheels = physics.wheels
         wheel_F_x = (wheels[0].position.x + wheels[1].position.x) / 200
         wheel_F_y = (wheels[0].position.y + wheels[1].position.y) / 200
         print("_____________________///////////////BREAK//////////////___________________")
-        # print(loc_x, loc_y)
-        # print(w_x2, w_y2)
         while ((wheel_F_x - w_x2) ** 2 + (wheel_F_y - w_y2) ** 2) ** 0.5 >= 0.3:
 
-            control = controller.run_step(5, control_waypoints[i + 1])
+            control = controller.run_step(10)
 
 
             print("loc",w_x2, w_y2)
@@ -224,29 +201,26 @@ if __name__ == '__main__':
             p2 = np.array([w_x2, w_y2])
             p3 = np.array([wheel_F_x, wheel_F_y])
 
-            # TRY THIS NEXT
-            # phi = math.atan2((loc_y - w_y2), (loc_x - w_x2))
+            trans = CARLA_world.ego_vehicle.get_transform()
+            yaw = trans.rotation.yaw
 
-            # d = ((w_x - w_x2) * (w_y2 - wheel_F_y) - (w_x2 - wheel_F_x) * (w_y - w_x2)) / np.sqrt(np.square(w_x - w_x2) + np.square(w_y - w_y2))
-            # print("earlier", phi)
-            # print("car", (trans.rotation.yaw))
-            new_phi = phi + (trans.rotation.yaw * math.pi / 180)
-            # d = np.linalg.norm(np.cross(p2 - p1, p1 - p3)) / np.linalg.norm(p2 - p1)
+            phi = math.atan2((w_y2 - w_y), (w_x2 - w_x)) - yaw*(math.pi/180)
+
             d = np.cross(p2 - p1, p3 - p1) / np.linalg.norm(p2 - p1)
-            print("line", d)
-            print("phi", new_phi)
-            kp = 1
-            ks = 1
-            V = 5 / 3.6
-            # print(math.atan2(kp*d,ks+V))
-            control.steer = (-math.atan2(kp * d, ks + V) + new_phi) / (math.pi)
-            # print(control.steer)
+            # print("line", d)
+            # print("phi", new_phi)
+            kp = 6
+            ks = 0.2
+            Vel = CARLA_world.ego_vehicle.get_velocity()
+            v = math.sqrt(Vel.x**2 + Vel.y**2)
+            # print("vel", v)
+            # print(math.atan2(kp*d,ks+v))
+            # print(phi)
+            control.steer = (-math.atan2(kp * d, ks + v) + phi)
+            # print("steer", control.steer)
 
-            # control.steer = 0
             CARLA_world.ego_vehicle.apply_control(control)
-            # print(control.throttle)
 
-            # print("dist", ((loc_x - w_x2) ** 2 + (loc_y - w_y2) ** 2) ** 0.5)
             # Advance the simulation time
             CARLA_world.carla_world.tick()
 
@@ -259,9 +233,11 @@ if __name__ == '__main__':
             gameDisplay.fill((0, 0, 0))
             gameDisplay.blit(renderObject.surface, (0, 0))
             pygame.display.flip()
-            # trans = CARLA_world.ego_vehicle.get_transform()
-            # loc_x, loc_y = trans.location.x, trans.location.y
-            # print(wheel_F_x, wheel_F_y)
+            actual_x.append(wheel_F_x)
+            actual_y.append(wheel_F_y)
 
+
+    plt.scatter(actual_x, actual_y)
+    plt.show()
     camera.stop()
     pygame.quit()
