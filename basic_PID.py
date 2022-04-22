@@ -74,7 +74,7 @@ class VehiclePIDController():
         self._lon_controller = PIDLongitudinalController(self._vehicle, args_longitudinal[0], args_longitudinal[1], args_longitudinal[2])
         self._lat_controller = PIDLateralController(self._vehicle, offset, args_lateral[0], args_lateral[1], args_lateral[2])
 
-    def run_step(self, target_speed, waypoint):
+    def run_step(self, target_speed):
         """
         Execute one step of control invoking both lateral and longitudinal
         PID controllers to reach a target waypoint
@@ -86,7 +86,7 @@ class VehiclePIDController():
         """
 
         acceleration = self._lon_controller.run_step(target_speed)
-        current_steering = self._lat_controller.run_step(waypoint)
+        # current_steering = self._lat_controller.run_step(waypoint)
         control = carla.VehicleControl()
         if acceleration >= 0.0:
             control.throttle = min(acceleration, self.max_throt)
