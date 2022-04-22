@@ -346,10 +346,11 @@ class RRT:
         '''
         cost = 0
         curr_node = end_node
+        path = []
         while start_node.x != curr_node.x or start_node.y != curr_node.y:
             # Keep tracing back until finding the start_node
             # or no path exists
-            self.path.append(curr_node)
+            path.append(curr_node)
             print(curr_node.waypoint)
             parent = curr_node.parent
             if parent is None:
@@ -357,8 +358,8 @@ class RRT:
                 return 0
             cost += curr_node.cost
             curr_node = parent
-
-        return self.path
+        path = path[::-1] #reversing the list
+        return path
 
     def path_cost(self, start_node, end_node):
         '''Compute path cost starting from start node to end node
@@ -473,7 +474,7 @@ class RRT:
         if self.found:
             steps = len(self.vertices) - 2
             length = self.path_cost(self.start, self.goal)
-            path = self.generate_path(self.start, self.goal)
+            self.path = self.generate_path(self.start, self.goal)
             print("It took %d nodes to find the current paths" % steps)
             print("The path length is %.2f" % length)
         if not self.found:
@@ -508,7 +509,8 @@ class RRT:
         if self.found:
             steps = len(self.vertices) - 2
             length = self.path_cost(self.start, self.goal)
-            path = self.generate_path(self.start, self.goal)
+            self.path = self.generate_path(self.start, self.goal)
+            # print(self.path)
             print("It took %d nodes to find the current path" % steps)
             print("The path length is %.2f" % length)
         else:
